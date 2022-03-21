@@ -1,5 +1,7 @@
 
-from ..tasks.cozmo_test_task import Task
+#from ..tasks.cozmo_test_task import Task
+from ..tasks.cozmo_first_task import Task
+
 import logging
 
 from cozmo_api.controller import Controller
@@ -17,7 +19,7 @@ def get_tasks(parsed):
             protocol_log_level=logging.INFO,
             robot_log_level=logging.INFO,
         ) as ctrlr:
-            for _ in range(1, 5):
+            for _ in range(3):
                 yield Task(controler=ctrlr)
 
 

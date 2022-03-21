@@ -105,3 +105,4 @@ class BaseTask:
                 self._step()
 
             self.loop_fun()
+        return 
