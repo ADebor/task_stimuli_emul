@@ -101,7 +101,7 @@ class Task(BaseTask):
             self.clock = self.clock_new
             self.info = self.controller.infos
             self.obs = self.controller.last_frame
-            if self.controller._mode is not "test":
+            if self.controller._mode != "test":
                 self.update_screen()
         
         curr_pos = (self.info["pose_x"], self.info["pose_y"],)

@@ -1,9 +1,9 @@
 import argparse
 import importlib
 from src.shared import cli 
-import os
+import os, sys
 
-if __name__=="__main__":
+def main():
     parser = argparse.ArgumentParser(description="Test script parser")
     parser.add_argument("-t", "--test", action="store_true")
     args = parser.parse_args()
@@ -12,5 +12,8 @@ if __name__=="__main__":
 
     tasks = ses_mod.get_tasks(args)
     cli.main_loop(tasks)
-    os._exit(0) # to change
+    sys.exit(1)
+
+if __name__=="__main__":
+    main()
     
