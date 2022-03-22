@@ -9,7 +9,7 @@ class BaseTask:
 
     def __init__(
         self,
-        controler: Controller = None,
+        controller: Controller = None,
         img_path: Optional[str] = None,
         sound_path: Optional[str] = None,
         capture_path: Optional[str] = None,
@@ -22,7 +22,7 @@ class BaseTask:
             capture_path (Optional[str], optional): path for picture saving. Defaults to None.
         """
         
-        self.controler = controler
+        self.controller = controller
         self.obs = None
         self.rew = None
         self.done = False
@@ -71,7 +71,7 @@ class BaseTask:
 
     def _reset(self):
         """Initializes/Resets display, sound and image capture handles."""
-        self.controler.reset(
+        self.controller.reset(
             img_path=self.img_path,
             sound_path=self.sound_path,
             capture_path=self.capture_path,
@@ -79,7 +79,7 @@ class BaseTask:
 
     def _step(self):
         """Sends actions dictionary to the Controller."""
-        self.controler.step(self.actions_old)
+        self.controller.step(self.actions_old)
 
     def reset_dict(self):
         """Resets the action dictionary with default values."""
@@ -91,18 +91,23 @@ class BaseTask:
         self.actions["drive"] = []
         self.actions["acc_rate"] = 0.0
 
+    def stop(self):
+        self.controller.stop()
+
     def run(self):
         """Main task loop."""
         self._reset()
         time.sleep(2)
-        while True:
+        while not self.done:
             time.sleep(0.01)
             self.get_actions()
             if self.done:
-                return
+                break
             elif self.actions_is_new():
                 self.actions_old = copy.deepcopy(self.actions)
                 self._step()
-
             self.loop_fun()
+
+        self.stop()
+
         return 

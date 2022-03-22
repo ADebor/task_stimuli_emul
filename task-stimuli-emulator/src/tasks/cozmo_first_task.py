@@ -21,9 +21,9 @@ def dist(p1, p2):
     return np.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)   
 
 class Task(BaseTask):
-    def __init__(self, controler, timeout=1*60):
+    def __init__(self, controller, timeout=5*60):
         super().__init__(
-            controler=controler,
+            controller=controller,
         ) 
         pygame.init()
         self.timeout = timeout
@@ -74,7 +74,7 @@ class Task(BaseTask):
 
             if event.type == pygame.QUIT:
                 self.done = True
-                pygame.quit()
+                #pygame.quit()
                 return
 
             elif event.type == pygame.KEYDOWN or event.type == pygame.KEYUP:
@@ -99,15 +99,19 @@ class Task(BaseTask):
         self.clock_new = time.time()
         if self.clock_new - self.clock > 1 / COZMO_FPS:
             self.clock = self.clock_new
-            self.info = self.controler.infos
-            self.obs = self.controler.last_frame
-            if self.controler._mode is not "test":
+            self.info = self.controller.infos
+            self.obs = self.controller.last_frame
+            if self.controller._mode is not "test":
                 self.update_screen()
         
         curr_pos = (self.info["pose_x"], self.info["pose_y"],)
         if dist(curr_pos, TARGET) < TARGET_THRESH:
             self.done = True
             print("Well done ! You solved the task in less than {} seconds.\n".format(self.timeout)) 
+
+    def stop(self):
+        super().stop()
+        pygame.quit()
 
     def run(self):
         try:
