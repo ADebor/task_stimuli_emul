@@ -1,7 +1,7 @@
 import argparse
 import importlib
 from src.shared import cli 
-import os, sys
+import sys
 
 def main():
     parser = argparse.ArgumentParser(description="Test script parser")
