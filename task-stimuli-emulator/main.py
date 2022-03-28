@@ -1,19 +1,36 @@
-import argparse
-import importlib
-from src.shared import cli 
-import sys
+import sys, importlib
+from src.shared import parser 
+from src.shared.didyoumean import suggest_session_tasks
 
-def run():
-    parser = argparse.ArgumentParser(description="Test script parser")
-    parser.add_argument("-t", "--test", action="store_true")
-    args = parser.parse_args()
+def run(parsed):
+    
+    try:
+        ses_mod = importlib.import_module('src.sessions.ses-%s'%parsed.tasks)
+        tasks = ses_mod.get_tasks(parsed) if hasattr(ses_mod, 'get_tasks') else ses_mod.TASKS
+    except ImportError:
+        suggestion = suggest_session_tasks(parsed.tasks)
+        raise(ValueError('session tasks file cannot be found for %s. Did you mean %s ?'%(parsed.tasks, suggestion)))
 
-    ses_mod = importlib.import_module('src.sessions.ses-robots')
-
-    tasks = ses_mod.get_tasks(args)
-    cli.main_loop(tasks)
-    sys.exit(1)
+    from src.shared import cli
+    try:
+        cli.main_loop(
+            tasks,
+            parsed.subject,
+            parsed.session,
+            parsed.output,
+            parsed.eyetracking,
+            parsed.fmri,
+            parsed.meg,
+            parsed.ctl_win,
+            parsed.run_on_battery,
+            parsed.ptt,
+            parsed.record_movie,
+            parsed.skip_soundcheck,
+            )
+    finally:
+        sys.exit(1)
 
 if __name__=="__main__":
-    run()
+    parsed = parser.parse_args()
+    run(parsed)
     

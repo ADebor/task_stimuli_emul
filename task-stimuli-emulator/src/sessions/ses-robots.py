@@ -1,8 +1,5 @@
-#from ..tasks.cozmo_test_task import Task
-from ..tasks.cozmo_first_task import Task
-
+from ..tasks import robot
 import logging
-
 from cozmo_api.controller import Controller
 
 def get_tasks(parsed):
@@ -18,7 +15,7 @@ def get_tasks(parsed):
             protocol_log_level=logging.DEBUG,
             robot_log_level=logging.DEBUG,
         ) as ctrlr:
-            for _ in range(10):
-                yield Task(controller=ctrlr)
+            for run in range(1, 5):
+                yield robot.CozmoFirstTask(controller=ctrlr, name=f"cozmo_run-{run}",)
     
           

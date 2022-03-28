@@ -1,10 +1,10 @@
+from psychopy import visual, core, data, logging
 from cozmo_api.controller import Controller
 import time
 from typing import Optional
 import copy
 
-
-class BaseTask:
+class BaseTask():
     """BaseTask class, implementing the basic run loop and some facilities."""
 
     def __init__(
