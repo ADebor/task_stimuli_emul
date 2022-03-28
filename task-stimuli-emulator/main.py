@@ -3,7 +3,7 @@ import importlib
 from src.shared import cli 
 import sys
 
-def main():
+def run():
     parser = argparse.ArgumentParser(description="Test script parser")
     parser.add_argument("-t", "--test", action="store_true")
     args = parser.parse_args()
@@ -15,5 +15,5 @@ def main():
     sys.exit(1)
 
 if __name__=="__main__":
-    main()
+    run()
     
