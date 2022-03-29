@@ -169,17 +169,6 @@ def main_loop(
                     record_movie=record_movie,    
                 )
 
-                """ res = input()
-                if res == "5":
-                    break
-                elif res == 'q':
-                    print("Session exited at task #{}.\n".format(i))
-                    return
-                else:
-                    print("Wrong key pressed: please press '5' or 'q'.\n")
-            
-            task.run() """
-
     except KeyboardInterrupt as ki:
         print(traceback.format_exc())
         logging.exp(msg="user killing the program")

@@ -21,11 +21,10 @@ class CozmoBaseTask(Task):
     def __init__(
         self,
         controller: Controller = None,
-        img_path: Optional[str] = None,
+        img_path: Optional[str] = None, # TODO: these paths could be moved to child class when needed
         sound_path: Optional[str] = None,
         capture_path: Optional[str] = None,
-        max_duration: Optional[float]=0.0,
-        *args, 
+        *args,
         **kwargs,
     ):
         """CozmoTask class constructor.
@@ -35,13 +34,11 @@ class CozmoBaseTask(Task):
             img_path (Optional[str], optional): path of the image to display on Cozmo's screen. Defaults to None.
             sound_path (Optional[str], optional): path of the sound to play in Cozmo's speaker. Defaults to None.
             capture_path (Optional[str], optional): path for picture saving. Defaults to None.
-            max_duration (Optional[float], optional): maximum duration of the task in seconds.
         """
         super().__init__(**kwargs)
-        self.max_duration = max_duration
         self.controller = controller
         self.obs = None
-        self.rew = None
+        #self.rew = None
         self.done = False
         self.info = None
         self.actions = {
@@ -66,6 +63,29 @@ class CozmoBaseTask(Task):
         self.sound_path = sound_path
         self.capture_path = capture_path
 
+    def _setup(self, exp_win):
+        super()._setup(exp_win) #useless (pass function)
+        self.controller.reset()
+        while self.controller.last_frame is None:   #wait for frame to be captured (busy waiting ok ? no time constraint in setup ?)
+            pass
+        self._first_frame = self.controller.last_frame
+
+        min_ratio = min(
+            exp_win.size[0] / self._first_frame.size[0],
+            exp_win.size[1] / self._first_frame.size[1],
+        )
+        width = int(min_ratio * self._first_frame.size[0])
+        height = int(min_ratio * self._first_frame.size[1])
+
+        self.game_vis_stim = visual.ImageStim(
+            exp_win,
+            size=(width, height),
+            units="pixels",
+            interpolate=False,
+            flipVert=True,
+            autoLog=False,
+        )
+
     def get_actions(self, *args, **kwargs):
         """Must update the actions instance dictionary of the task class.
 
@@ -82,11 +102,11 @@ class CozmoBaseTask(Task):
         """
         return self.actions != self.actions_old
 
-    def loop_fun(self):
+    def loop_fun(self, *args, **kwargs):
         """Custom method to be overridden if needed."""
         pass
 
-    def _reset(self):
+    def _reset(self):   #TODO: should be moved to child class that needs these paths
         """Initializes/Resets display, sound and image capture handles."""
         self.controller.reset(
             img_path=self.img_path,
@@ -114,10 +134,10 @@ class CozmoBaseTask(Task):
     def run_cozmo(self, *args, **kwargs):
         """Main task loop."""
         _done = False
-        yield True  # ok ?
+        yield True
 
         self._reset()
-        time.sleep(2)
+        #time.sleep(2)
         while not _done:
             time.sleep(0.01)
             _done = self.get_actions(*args, **kwargs)
@@ -126,22 +146,39 @@ class CozmoBaseTask(Task):
             elif self.actions_is_new():
                 self.actions_old = copy.deepcopy(self.actions)
                 self._step()
-            self.loop_fun()
-            yield True
+            self.loop_fun(*args, **kwargs)
 
         self._stop_cozmo()
+
 
 # ----------------------------------------------------------------- #
 #                   Cozmo First Task (PsychoPy)                     #
 # ----------------------------------------------------------------- #
 
-#KEY_SET = ["a", "z", "u", "d", "up", "down", "left", "right", "p", "s", "space",]
-#KEY_SET = ["a", "z", "_", "_", "up", "down", "left", "right", "_", "_", "_",]
+# KEY_SET = ["x", "a", "b", "y", "u", "d", "l", "r", "p", "s", "space",]
+KEY_SET = ["x", "_", "b", "_", "u", "d", "l", "r", "_", "_", "_",]
+import pyglet
+
+KEY_ACTION_DICT = {
+    KEY_SET[4] : "forward",
+    KEY_SET[5] : "backward",
+    KEY_SET[6] : "left",
+    KEY_SET[7] : "right" ,
+    KEY_SET[0] : "head_up",
+    KEY_SET[2] : "head_down"
+    }
+
+ACTION_ACTU_DICT = {
+    "forward": "drive",
+    "backward": "drive",
+    "left": "drive",
+    "right": "drive",
+    "head_up": "head",
+    "head_down": "head",
+    }
 
 _keyPressBuffer = []
 _keyReleaseBuffer = []
-import pyglet
-from pyglet
 
 def _onPygletKeyPress(symbol, modifier):
     if modifier:
@@ -151,41 +188,23 @@ def _onPygletKeyPress(symbol, modifier):
     key = pyglet.window.key.symbol_string(symbol).lower().lstrip("_").lstrip("NUM_")
     _keyPressBuffer.append((key, keyTime))
 
+
 def _onPygletKeyRelease(symbol, modifier):
     global _keyReleaseBuffer
     keyTime = core.getTime()
     key = pyglet.window.key.symbol_string(symbol).lower().lstrip("_").lstrip("NUM_")
     _keyReleaseBuffer.append((key, keyTime))
 
+
 class CozmoFirstTaskPsychoPy(CozmoBaseTask):
-    def __init__(self, controller, timeout=5*60):
-        super().__init__(
-            controller=controller,
-            max_duration=timeout,
-        ) 
 
+    DEFAULT_INSTRUCTION = "Let's explore the maze !"
+
+    def __init__(self, max_duration=5 * 60, *args, **kwargs):
+        super().__init__(*args, *kwargs)
+        self.max_duration=max_duration
         self.actions_list = []
-        self._allowed_kb_keys = {  
-            "forward": pyglet.window.key.UP,
-            "backward": pyglet.key.DOWN,
-            "left": pyglet.key.LEFT,
-            "right": pyglet.key.RIGHT,
-            "head_up": pyglet.key.A,
-            "head_down": pyglet.key.Z,
-        }
-
-        self._actions2key_dict = {
-            "forward": "drive",
-            "backward": "drive",
-            "left": "drive",
-            "right": "drive",
-            "head_up": "head",
-            "head_down": "head",
-        }
-
-        self.clock_old = time.time()
-        self.clock = time.time()
-
+        self.frame_timer = core.Clock()
         self.cnter = 0
 
     def _instructions(self, exp_win, ctl_win):
@@ -207,28 +226,28 @@ class CozmoFirstTaskPsychoPy(CozmoBaseTask):
             yield ()
 
     def _setup(self, exp_win):
-
+        super()._setup(exp_win)
         self.txt_stim = visual.TextStim(
             exp_win,
             text="Get in there, Cozmo !",
-            font= "Palatino Linotype",
-            height= 42,
-            units='pixels',
+            font="Palatino Linotype",
+            height=42,
+            units="pixels",
             alignText="center",
             color=self.txt_color,
         )
-        self._progress_bar_refresh_rate = 1 
+        self._progress_bar_refresh_rate = 1
 
     def _set_key_handler(self, exp_win):
         exp_win.winHandle.on_key_press = _onPygletKeyPress
         exp_win.winHandle.on_key_release = _onPygletKeyRelease
         self.pressed_keys = set()
-    
+
     def _unset_key_handler(self, exp_win):
         # deactivate custom keys handling
         exp_win.winHandle.on_key_press = event._onPygletKey
 
-    def _handle_controller_presses(self, exp_win):                                  # TODO: understand why k[0]
+    def _handle_controller_presses(self, exp_win):  # k[0] : actual key, k[1] : time stamp
         exp_win.winHandle.dispatch_events()
         global _keyPressBuffer, _keyReleaseBuffer
 
@@ -238,20 +257,21 @@ class CozmoFirstTaskPsychoPy(CozmoBaseTask):
         _keyReleaseBuffer.clear()
         for k in _keyPressBuffer:
             self.pressed_keys.add(k[0])
-        self._new_key_pressed = _keyPressBuffer[:] #copy
+        self._new_key_pressed = _keyPressBuffer[:]  # copy
         _keyPressBuffer.clear()
         return self.pressed_keys
 
-    def _run(self, exp_win, ctl_win):
+    def _run(self, exp_win, *args, **kwargs):
         self._set_key_handler(exp_win)
         while True:
-            yield from self.run_cozmo(exp_win, ctl_win)
-            if (self.max_duration and self.task_timer.getTime() > self.max_duration
+            yield from self.run_cozmo(exp_win)
+            if (
+                self.max_duration and self.task_timer.getTime() > self.max_duration
             ):  # stop if we are above the planned duration
                 break
 
     def _stop(self, exp_win, ctl_win):
-        exp_win.setColor((0,0,0), "rgb")
+        exp_win.setColor((0, 0, 0), "rgb")
         for _ in range(2):
             yield True
 
@@ -259,38 +279,59 @@ class CozmoFirstTaskPsychoPy(CozmoBaseTask):
         pass
         return False
 
-    def get_actions(self, exp_win):
-        """ self._handle_controller_presses(exp_win)
-        keys = [k in self.pressed_keys for k in KEY_SET] """
-        keys = self._handle_controller_presses(exp_win)
-        self.reset_dict()
-        # TODO: check if it works even if we don't check for keydown or keyup (should be fine)
-        # TODO: add 'quit' feature ? like closing the PyGame window 
-        # TODO: stopped here, TODO: remove pygame dependencies for pyglet, get_pressed actually gives bool, so check if can do sth like in https://github.com/courtois-neuromod/task_stimuli/blob/a7c98f63ddf921bd06dff0da333308d419b6a414/src/tasks/videogame.py#L235
-        self.actions_list = []
-        kb_keys = pygame.key.get_pressed()
-        for allowed_kb_key in self._allowed_kb_keys.values():
-            if kb_keys[allowed_kb_key]:  
-                self.actions_list.append(
-                    list(self._allowed_kb_keys.keys())[
-                        list(self._allowed_kb_keys.values()).index(
-                            allowed_kb_key
-                        )
-                    ]
-                )
+    def _update_value(self, actu, value):
+        if type(self.actions[actu]) is bool:
+            self.actions[actu] = True
+        elif type(self.actions[actu]) is list:
+            self.actions[actu].append(value)
 
-        self._update_dict()
-        return False
+    def _progressive_mov(self):
+        self.cnter += 1
+        if not self.actions["drive"]:
+            self.cnter = 0.0
+        self.actions["acc_rate"] = self.cnter * 0.01
 
-    def clear_key_buffers(self):
+    def _update_dict(self):
+        for action in self.actions_list:
+            actu = ACTION_ACTU_DICT[action]
+            self._update_value(actu, action)
+        self._progressive_mov()
+
+    def _clear_key_buffers(self):
         global _keyPressBuffer, _keyReleaseBuffer
         self.pressed_keys.clear()
         _keyReleaseBuffer.clear()
         _keyPressBuffer.clear()
 
-    def run_cozmo(self, exp_win, ctl_win):
+    def _reset(self):
+        super()._reset()
+        self.frame_timer.reset()
+
+    def _render_graphics(self, exp_win):
+        self.game_vis_stim.image = self.obs / 255.0
+        self.game_vis_stim.draw(exp_win)
+
+    def loop_fun(self, exp_win):
+        if self.frame_timer.getTime() >= 1 / COZMO_FPS:
+            self.frame_timer.reset()
+            self.info = self.controller.infos
+            self.obs = self.controller.last_frame
+            if self.controller._mode != "test":
+                self._render_graphics(exp_win)
+                yield True #TODO: ok to yield from here ? or should yield from calling fun (run_cozmo) ?
+
+    def get_actions(self, exp_win):
+        keys = self._handle_controller_presses(exp_win)
+        self.reset_dict()
+        self.actions_list.clear()
+        for key in keys:
+            self.actions_list.append(KEY_ACTION_DICT[key])
+        self._update_dict()
+        return False
+
+    def run_cozmo(self, exp_win):
         # flush all keys to avoid unwanted actions
-        self.clear_key_buffers()
+        self._clear_key_buffers()
         super().run_cozmo(exp_win)
 
 # ----------------------------------------------------------------- #
@@ -305,24 +346,25 @@ import numpy as np
 
 from .cozmo_test_task_utils import screen_init, screen_update
 
-#from func_timeout import func_timeout, FunctionTimedOut
+# from func_timeout import func_timeout, FunctionTimedOut
 
 COZMO_FPS = 15.0
-TARGET = (350.0, 350.0)  #custom target pose   
-TARGET_THRESH = 25 #mm
+TARGET = (350.0, 350.0)  # custom target pose
+TARGET_THRESH = 25  # mm
 
 dirname = os.path.dirname(__file__)
 
 
 def dist(p1, p2):
-    return np.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)   
+    return np.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
+
 
 class CozmoFirstTaskPyGame(CozmoBaseTask):
-    def __init__(self, controller, timeout=5*60):
+    def __init__(self, controller, timeout=5 * 60):
         super().__init__(
             controller=controller,
             max_duration=timeout,
-        ) 
+        )
         pygame.init()
         self._screen, self._font = screen_init()
         self.actions_list = []
@@ -370,14 +412,14 @@ class CozmoFirstTaskPyGame(CozmoBaseTask):
         for event in pygame.event.get():
 
             if event.type == pygame.QUIT:
-                #pygame.quit()
+                # pygame.quit()
                 return True
 
             elif event.type == pygame.KEYDOWN or event.type == pygame.KEYUP:
                 self.actions_list = []
                 kb_keys = pygame.key.get_pressed()
                 for allowed_kb_key in self._allowed_kb_keys.values():
-                    if kb_keys[allowed_kb_key]:  
+                    if kb_keys[allowed_kb_key]:
                         self.actions_list.append(
                             list(self._allowed_kb_keys.keys())[
                                 list(self._allowed_kb_keys.values()).index(
@@ -401,21 +443,23 @@ class CozmoFirstTaskPyGame(CozmoBaseTask):
             self.obs = self.controller.last_frame
             if self.controller._mode != "test":
                 self.update_screen()
-        
-        curr_pos = (self.info["pose_x"], self.info["pose_y"],)
+
+        curr_pos = (
+            self.info["pose_x"],
+            self.info["pose_y"],
+        )
         if dist(curr_pos, TARGET) < TARGET_THRESH:
             self.done = True
-            #print("Well done ! You solved the task in less than {} seconds.\n".format(self.timeout)) 
+            print("Well done ! You solved the task") # in less than {} seconds.\n".format(self.timeout))
 
     def _stop_cozmo(self):
         super()._stop_cozmo()
         pygame.quit()
 
-    
     def run_cozmo(self):
         pass
         """ try:
             _ = func_timeout(self.timeout, super()._run_cozmo)
         except FunctionTimedOut:
             print("You could not complete the task within {} seconds. Task failed.\n".format(self.timeout)) """
-        # TO CHANGE OR TO LET AS IN PARENT CLASS but no func_timeout 
+        # TO CHANGE OR TO LET AS IN PARENT CLASS but no func_timeout
