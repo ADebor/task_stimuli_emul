@@ -2,7 +2,8 @@ import time
 from typing import Optional
 import copy
 
-from psychopy import visual, core, logging, event
+from psychopy import visual
+#, core, logging, event
 from .task_base import Task
 
 from ..shared import config
@@ -134,7 +135,7 @@ class CozmoBaseTask(Task):
     def run_cozmo(self, *args, **kwargs):
         """Main task loop."""
         _done = False
-        yield True
+        yield True  #may be useless
 
         self._reset()
         #time.sleep(2)
@@ -146,7 +147,8 @@ class CozmoBaseTask(Task):
             elif self.actions_is_new():
                 self.actions_old = copy.deepcopy(self.actions)
                 self._step()
-            self.loop_fun(*args, **kwargs)
+            flip = self.loop_fun(*args, **kwargs)   #TODO: the "yield" thing does not fit with the original pygame-based task organization (in task_stimuli_emulator)
+            yield flip  # True if new frame, False otherwise
 
         self._stop_cozmo()
 
@@ -318,7 +320,8 @@ class CozmoFirstTaskPsychoPy(CozmoBaseTask):
             self.obs = self.controller.last_frame
             if self.controller._mode != "test":
                 self._render_graphics(exp_win)
-                yield True #TODO: ok to yield from here ? or should yield from calling fun (run_cozmo) ?
+                return True
+        return False
 
     def get_actions(self, exp_win):
         keys = self._handle_controller_presses(exp_win)
@@ -338,7 +341,7 @@ class CozmoFirstTaskPsychoPy(CozmoBaseTask):
 #                     Cozmo First Task (PyGame)                     #
 # ----------------------------------------------------------------- #
 
-import os
+""" import os
 import time
 
 import pygame
@@ -458,8 +461,9 @@ class CozmoFirstTaskPyGame(CozmoBaseTask):
 
     def run_cozmo(self):
         pass
-        """ try:
+        try:
             _ = func_timeout(self.timeout, super()._run_cozmo)
         except FunctionTimedOut:
-            print("You could not complete the task within {} seconds. Task failed.\n".format(self.timeout)) """
+            print("You could not complete the task within {} seconds. Task failed.\n".format(self.timeout))
         # TO CHANGE OR TO LET AS IN PARENT CLASS but no func_timeout
+ """

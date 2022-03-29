@@ -1,7 +1,13 @@
+# Don't display 'Hello from the Pygame Community!'
+from os import environ
+try:
+    environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
+except:
+    pass
+
 from ..tasks import robot
 import logging
 from cozmo_api.controller import Controller
-
 
 def get_tasks(parsed):
     if parsed.test:
