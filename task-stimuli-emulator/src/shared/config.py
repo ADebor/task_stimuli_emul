@@ -14,7 +14,7 @@ OUTPUT_DIR = "output"
 
 EYETRACKING_ROI = (60, 30, 660, 450)
 
-EXP_SCREEN_XRANDR_NAME = "eDP-1"
+EXP_SCREEN_XRANDR_NAME = "default"
 
 EXP_MONITOR = Monitor(
     name='__blank__',
@@ -24,8 +24,8 @@ EXP_MONITOR = Monitor(
 
 EXP_WINDOW = dict(
     size=(1280, 1024),
-    screen=1,
-    fullscr=True,
+    #screen=1,
+    #fullscr=True,
     gammaErrorPolicy="warn",
     #waitBlanking=False,
 )

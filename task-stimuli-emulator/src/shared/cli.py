@@ -10,7 +10,7 @@ globalClock = core.MonotonicClock(0)
 logging.setDefaultClock(globalClock)
 
 from . import config
-from ..tasks import task_base, video
+from ..tasks import task_base
 
 def listen_shortcuts():
     if any([k[1] & event.MOD_CTRL for k in event._keyBuffer]):
