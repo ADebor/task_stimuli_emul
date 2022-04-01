@@ -143,8 +143,8 @@ def main_loop(
             )
 
     try:
+        #breakpoint()
         for task in all_tasks:
-
             # clear events buffer in case the user pressed a lot of buttoons
             event.clearEvents()
             # setup task files (eg. video)

@@ -2,8 +2,7 @@ import time
 from typing import Optional
 import copy
 
-from psychopy import visual
-#, core, logging, event
+from psychopy import visual, core, logging, event
 from .task_base import Task
 
 from ..shared import config
@@ -67,25 +66,26 @@ class CozmoBaseTask(Task):
     def _setup(self, exp_win):
         super()._setup(exp_win) #useless (pass function)
         self.controller.reset()
-        while self.controller.last_frame is None:   #wait for frame to be captured (busy waiting ok ? no time constraint in setup ?)
-            pass
-        self._first_frame = self.controller.last_frame
+        breakpoint()
+        if self.controller._mode == "default":
+            while self.controller.last_frame is None:   #wait for frame to be captured (busy waiting ok ? no time constraint in setup ?)
+                pass
+            self._first_frame = self.controller.last_frame
+            min_ratio = min(
+                exp_win.size[0] / self._first_frame.size[0],
+                exp_win.size[1] / self._first_frame.size[1],
+            )
+            width = int(min_ratio * self._first_frame.size[0])
+            height = int(min_ratio * self._first_frame.size[1])
 
-        min_ratio = min(
-            exp_win.size[0] / self._first_frame.size[0],
-            exp_win.size[1] / self._first_frame.size[1],
-        )
-        width = int(min_ratio * self._first_frame.size[0])
-        height = int(min_ratio * self._first_frame.size[1])
-
-        self.game_vis_stim = visual.ImageStim(
-            exp_win,
-            size=(width, height),
-            units="pixels",
-            interpolate=False,
-            flipVert=True,
-            autoLog=False,
-        )
+            self.game_vis_stim = visual.ImageStim(
+                exp_win,
+                size=(width, height),
+                units="pixels",
+                interpolate=False,
+                flipVert=True,
+                autoLog=False,
+            )
 
     def get_actions(self, *args, **kwargs):
         """Must update the actions instance dictionary of the task class.
@@ -203,7 +203,7 @@ class CozmoFirstTaskPsychoPy(CozmoBaseTask):
     DEFAULT_INSTRUCTION = "Let's explore the maze !"
 
     def __init__(self, max_duration=5 * 60, *args, **kwargs):
-        super().__init__(*args, *kwargs)
+        super().__init__(*args, **kwargs)
         self.max_duration=max_duration
         self.actions_list = []
         self.frame_timer = core.Clock()
@@ -217,9 +217,9 @@ class CozmoFirstTaskPsychoPy(CozmoBaseTask):
             color="black",
             wrapWidth=1.2,
         )
-        exp_win.setColor(self.bg_color, "rgb")
-        if ctl_win:
-            ctl_win.setColor(self.bg_color, "rgb")
+        # exp_win.setColor(self.bg_color, "rgb")
+        # if ctl_win:
+        #     ctl_win.setColor(self.bg_color, "rgb")
 
         for frameN in range(config.FRAME_RATE * config.INSTRUCTION_DURATION):
             screen_text.draw(exp_win)
@@ -234,9 +234,9 @@ class CozmoFirstTaskPsychoPy(CozmoBaseTask):
             text="Get in there, Cozmo !",
             font="Palatino Linotype",
             height=42,
-            units="pixels",
+            units="pix",
             alignText="center",
-            color=self.txt_color,
+            color="black",
         )
         self._progress_bar_refresh_rate = 1
 

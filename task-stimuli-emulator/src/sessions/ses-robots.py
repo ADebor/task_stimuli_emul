@@ -18,11 +18,12 @@ def get_tasks(parsed):
     with Controller.make(
         mode=mode,
         enable_procedural_face=False,
-        log_level=logging.DEBUG,
-        protocol_log_level=logging.DEBUG,
-        robot_log_level=logging.DEBUG,
+        log_level=logging.INFO,
+        protocol_log_level=logging.INFO,
+        robot_log_level=logging.INFO,
     ) as ctrlr:
         for run in range(1, 5):
+            print("run {}".format(run))
             yield robot.CozmoFirstTaskPsychoPy(
                 controller=ctrlr,
                 max_duration=2 * 60,
