@@ -1,6 +1,8 @@
 import time
 from typing import Optional
 import copy
+import numpy as np
+import skimage
 
 from psychopy import visual, core, logging, event
 from .task_base import Task
@@ -66,7 +68,7 @@ class CozmoBaseTask(Task):
     def _setup(self, exp_win):
         super()._setup(exp_win) #useless (pass function)
         self.controller.reset()
-        breakpoint()
+        #breakpoint()
         if self.controller._mode == "default":
             while self.controller.last_frame is None:   #wait for frame to be captured (busy waiting ok ? no time constraint in setup ?)
                 pass
@@ -101,6 +103,8 @@ class CozmoBaseTask(Task):
         Returns:
             bool: True if the updated actions instance dictionary is different from the previous actions dictionary sent for controlling Cozmo. False otherwise.
         """
+        print("\n", self.actions)
+        print(self.actions_old, "\n")
         return self.actions != self.actions_old
 
     def loop_fun(self, *args, **kwargs):
@@ -117,6 +121,7 @@ class CozmoBaseTask(Task):
 
     def _step(self):
         """Sends actions dictionary to the Controller."""
+        print("\nSTEP\n")
         self.controller.step(self.actions_old)
 
     def reset_dict(self):
@@ -179,6 +184,8 @@ ACTION_ACTU_DICT = {
     "head_down": "head",
     }
 
+COZMO_FPS = 15.0
+
 _keyPressBuffer = []
 _keyReleaseBuffer = []
 
@@ -197,6 +204,7 @@ def _onPygletKeyRelease(symbol, modifier):
     key = pyglet.window.key.symbol_string(symbol).lower().lstrip("_").lstrip("NUM_")
     _keyReleaseBuffer.append((key, keyTime))
 
+from PIL import ImageOps, Image
 
 class CozmoFirstTaskPsychoPy(CozmoBaseTask):
 
@@ -229,7 +237,7 @@ class CozmoFirstTaskPsychoPy(CozmoBaseTask):
 
     def _setup(self, exp_win):
         super()._setup(exp_win)
-        self.txt_stim = visual.TextStim(
+        self.txt_stim = visual.TextStim(    #TODO: not displayed
             exp_win,
             text="Get in there, Cozmo !",
             font="Palatino Linotype",
@@ -238,6 +246,7 @@ class CozmoFirstTaskPsychoPy(CozmoBaseTask):
             alignText="center",
             color="black",
         )
+        #self.txt_stim.draw()
         self._progress_bar_refresh_rate = 1
 
     def _set_key_handler(self, exp_win):
@@ -291,7 +300,7 @@ class CozmoFirstTaskPsychoPy(CozmoBaseTask):
         self.cnter += 1
         if not self.actions["drive"]:
             self.cnter = 0.0
-        self.actions["acc_rate"] = self.cnter * 0.01
+        self.actions["acc_rate"] = self.cnter * 0.05
 
     def _update_dict(self):
         for action in self.actions_list:
@@ -310,7 +319,9 @@ class CozmoFirstTaskPsychoPy(CozmoBaseTask):
         self.frame_timer.reset()
 
     def _render_graphics(self, exp_win):
-        self.game_vis_stim.image = self.obs / 255.0
+        #self.obs = ImageOps.grayscale(self.obs)
+        self.obs = self.obs.transpose(Image.FLIP_TOP_BOTTOM)
+        self.game_vis_stim.image = self.obs 
         self.game_vis_stim.draw(exp_win)
 
     def loop_fun(self, exp_win):
@@ -335,7 +346,8 @@ class CozmoFirstTaskPsychoPy(CozmoBaseTask):
     def run_cozmo(self, exp_win):
         # flush all keys to avoid unwanted actions
         self._clear_key_buffers()
-        super().run_cozmo(exp_win)
+        #breakpoint()
+        yield from super().run_cozmo(exp_win)
 
 # ----------------------------------------------------------------- #
 #                     Cozmo First Task (PyGame)                     #
