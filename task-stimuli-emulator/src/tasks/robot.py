@@ -103,8 +103,7 @@ class CozmoBaseTask(Task):
         Returns:
             bool: True if the updated actions instance dictionary is different from the previous actions dictionary sent for controlling Cozmo. False otherwise.
         """
-        print("\n", self.actions)
-        print(self.actions_old, "\n")
+    
         return self.actions != self.actions_old
 
     def loop_fun(self, *args, **kwargs):
@@ -121,7 +120,6 @@ class CozmoBaseTask(Task):
 
     def _step(self):
         """Sends actions dictionary to the Controller."""
-        print("\nSTEP\n")
         self.controller.step(self.actions_old)
 
     def reset_dict(self):
@@ -237,17 +235,6 @@ class CozmoFirstTaskPsychoPy(CozmoBaseTask):
 
     def _setup(self, exp_win):
         super()._setup(exp_win)
-        self.txt_stim = visual.TextStim(    #TODO: not displayed
-            exp_win,
-            text="Get in there, Cozmo !",
-            font="Palatino Linotype",
-            height=42,
-            units="pix",
-            alignText="center",
-            color="black",
-        )
-        #self.txt_stim.draw()
-        self._progress_bar_refresh_rate = 1
 
     def _set_key_handler(self, exp_win):
         exp_win.winHandle.on_key_press = _onPygletKeyPress
@@ -325,7 +312,7 @@ class CozmoFirstTaskPsychoPy(CozmoBaseTask):
         self.game_vis_stim.draw(exp_win)
 
     def loop_fun(self, exp_win):
-        if self.frame_timer.getTime() >= 1 / COZMO_FPS:
+        if self.frame_timer.getTime() >= 1 / COZMO_FPS: #TODO: timer not accurate on linux machine
             self.frame_timer.reset()
             self.info = self.controller.infos
             self.obs = self.controller.last_frame
