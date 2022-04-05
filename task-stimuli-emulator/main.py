@@ -32,4 +32,3 @@ def run(parsed):
 if __name__=="__main__":
     parsed = parser.parse_args()
     run(parsed)
-    

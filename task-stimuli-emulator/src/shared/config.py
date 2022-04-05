@@ -23,7 +23,7 @@ EXP_MONITOR = Monitor(
     )
 
 EXP_WINDOW = dict(
-    size=(1280, 1024),
+    size=(320, 240),
     #screen=1,
     #fullscr=True,
     gammaErrorPolicy="warn",

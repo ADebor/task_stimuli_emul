@@ -235,6 +235,16 @@ class CozmoFirstTaskPsychoPy(CozmoBaseTask):
 
     def _setup(self, exp_win):
         super()._setup(exp_win)
+        """self.txt_stim = visual.TextStim(
+            exp_win,
+            text="Get in there Cozmo !",
+            font="Palatino Linotype",
+            height=42,
+            units="pix",
+            alignText="center",
+            color="black",
+        )
+        self._progress_bar_refresh_rate = 1"""
 
     def _set_key_handler(self, exp_win):
         exp_win.winHandle.on_key_press = _onPygletKeyPress
@@ -312,7 +322,8 @@ class CozmoFirstTaskPsychoPy(CozmoBaseTask):
         self.game_vis_stim.draw(exp_win)
 
     def loop_fun(self, exp_win):
-        if self.frame_timer.getTime() >= 1 / COZMO_FPS: #TODO: timer not accurate on linux machine
+        t = self.frame_timer.getTime()    
+        if  t >= 1 / COZMO_FPS: #TODO: timer problem on linux machine
             self.frame_timer.reset()
             self.info = self.controller.infos
             self.obs = self.controller.last_frame
