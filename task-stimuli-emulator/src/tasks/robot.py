@@ -151,7 +151,7 @@ class CozmoBaseTask(Task):
                 self.actions_old = copy.deepcopy(self.actions)
                 self._step()
             flip = self.loop_fun(*args, **kwargs)   #TODO: the "yield" thing does not fit with the original pygame-based task organization (in task_stimuli_emulator)
-            yield flip  # True if new frame, False otherwise
+            if flip: yield True  # True if new frame, False otherwise
 
         self._stop_cozmo()
 
