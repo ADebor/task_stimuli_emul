@@ -143,7 +143,6 @@ def main_loop(
             )
 
     try:
-        #breakpoint()
         for task in all_tasks:
             # clear events buffer in case the user pressed a lot of buttoons
             event.clearEvents()
@@ -157,7 +156,7 @@ def main_loop(
             )
             print("READY")
 
-            while True:
+            while True: #TODO: why while true ?
                 exp_win.winHandle.activate()
 
                 shortcut_evt = run_task(
@@ -168,6 +167,32 @@ def main_loop(
                     gaze_drawer,
                     record_movie=record_movie,    
                 )
+
+                if shortcut_evt == "n":
+                    # restart the task
+                    logging.exp(msg="task - %s: restart" % str(task))
+                    task.restart()
+                    continue
+                elif shortcut_evt:
+                    # abort/skip or quit
+                    logging.exp(msg="task - %s: abort" % str(task))
+                    break
+                else:  # task completed
+                    logging.exp(msg="task - %s: complete" % str(task))
+                    # send stop trigger/marker to MEG + Biopac (or anything else on parallel port)
+                    break
+
+                logging.flush()
+
+            if shortcut_evt == "q":
+                print("quit")
+                break
+            elif shortcut_evt is None:
+                # add a delay between tasks to avoid remaining TTL to start next task
+                # do that only if the task was not aborted to save time
+                # there is anyway the duration of the instruction before listening to TTL
+                for i in range(DELAY_BETWEEN_TASK * config.FRAME_RATE):
+                    exp_win.flip(clearBuffer=False)
 
     except KeyboardInterrupt as ki:
         print(traceback.format_exc())

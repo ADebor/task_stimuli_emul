@@ -6,6 +6,7 @@ def run(parsed):
     try:
         ses_mod = importlib.import_module('src.sessions.ses-%s'%parsed.tasks)
         tasks = ses_mod.get_tasks(parsed) if hasattr(ses_mod, 'get_tasks') else ses_mod.TASKS
+        print(type(tasks))
     except ImportError:
         suggestion = suggest_session_tasks(parsed.tasks)
         raise(ValueError('session tasks file cannot be found for %s. Did you mean %s ?'%(parsed.tasks, suggestion)))

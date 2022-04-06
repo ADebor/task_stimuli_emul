@@ -5,7 +5,7 @@ try:
 except:
     pass
 
-from ..tasks import robot
+from ..tasks import robot, task_base
 import logging
 from cozmo_api.controller import Controller
 
@@ -22,11 +22,12 @@ def get_tasks(parsed):
         protocol_log_level=logging.INFO,
         robot_log_level=logging.INFO,
     ) as ctrlr:
-        for run in range(1, 5):
-            print("run {}".format(run))
-            yield robot.CozmoFirstTaskPsychoPy(
+        for run in range(3):
+            task = robot.CozmoFirstTaskPsychoPy(
                 controller=ctrlr,
-                max_duration=2 * 60,
-                name=f"cozmo_run-{run}",
+                max_duration=5,
+                name=f"cozmo_run-{run+1:02d}",
                 instruction="Explore the maze and find the target !",
             )
+            yield task
+
